@@ -1,10 +1,9 @@
-import React from "react";
-import MqttMessageInput from "./components/MqttMessageInput";
+import SmartHomeDashboard from "./components/SmartHomeDashboard";
 
 function App() {
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <MqttMessageInput />
+    <div>
+      <SmartHomeDashboard />
     </div>
   );
 }
