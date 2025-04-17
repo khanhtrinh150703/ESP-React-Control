@@ -29,6 +29,16 @@ export const useWebSocket = (setDevices: React.Dispatch<React.SetStateAction<Esp
         const data = JSON.parse(event.data);
         if (data.type === "heartbeat") return;
 
+        if (data.type === "delete") {
+          // Handle device deletion
+          setDevices((prevDevices) =>
+            prevDevices.filter((device) => device.deviceId !== data.deviceId)
+          );
+          console.log(`Device ${data.deviceId} deleted`);
+          return;
+        }
+
+        // Handle device update or addition
         const { deviceId, lightOn, rgbmode, commandTopic } = data;
         setDevices((prevDevices) => {
           const deviceExists = prevDevices.some((d) => d.deviceId === deviceId);
@@ -72,6 +82,16 @@ export const useWebSocket = (setDevices: React.Dispatch<React.SetStateAction<Esp
     };
   };
 
+  const deleteDevice = (deviceId: string) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: "delete", deviceId }));
+      console.log(`Sent delete command for device ${deviceId}`);
+    } else {
+      setErrorMessage("WebSocket is not connected");
+      console.error("Cannot send delete command: WebSocket is not connected");
+    }
+  };
+
   useEffect(() => {
     connectWebSocket();
     return () => {
@@ -81,5 +101,5 @@ export const useWebSocket = (setDevices: React.Dispatch<React.SetStateAction<Esp
     };
   }, []);
 
-  return { isConnected, reconnectAttempts, errorMessage, MAX_RECONNECT_ATTEMPTS };
+  return { isConnected, reconnectAttempts, errorMessage, MAX_RECONNECT_ATTEMPTS, deleteDevice };
 };

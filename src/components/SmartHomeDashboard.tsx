@@ -7,20 +7,43 @@ import { DeviceControls } from "./DeviceControls";
 export default function SmartHomeDashboard() {
   const [devices, setDevices] = useState<EspDevice[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { isConnected, reconnectAttempts, MAX_RECONNECT_ATTEMPTS } = useWebSocket(setDevices);
+  const [deviceToDelete, setDeviceToDelete] = useState<string | null>(null);
+  const {
+    isConnected,
+    reconnectAttempts,
+    MAX_RECONNECT_ATTEMPTS,
+    deleteDevice,
+  } = useWebSocket(setDevices);
 
   useEffect(() => {
     fetchDevices()
-      .then(data => setDevices(data))
+      .then((data) => setDevices(data))
       .catch(() => setErrorMessage("Failed to fetch devices"));
   }, []);
+
+  const handleDeleteClick = (deviceId: string) => {
+    setDeviceToDelete(deviceId);
+  };
+
+  const confirmDelete = () => {
+    if (deviceToDelete) {
+      deleteDevice(deviceToDelete);
+      setDeviceToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeviceToDelete(null);
+  };
 
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
         <h1>Smart Home Dashboard</h1>
         <div className="status-indicator">
-          <span className={`dot ${isConnected ? "connected" : "disconnected"}`}></span>
+          <span
+            className={`dot ${isConnected ? "connected" : "disconnected"}`}
+          ></span>
           <span>{isConnected ? "Online" : "Offline"}</span>
           {!isConnected && reconnectAttempts > 0 && (
             <span className="attempts">
@@ -56,18 +79,41 @@ export default function SmartHomeDashboard() {
                 setDevices={setDevices}
                 setErrorMessage={setErrorMessage}
               />
+              <button
+                className="delete-button"
+                onClick={() => handleDeleteClick(device.deviceId)}
+              >
+                Delete Device
+              </button>
             </div>
           ))
         ) : (
           <div className="no-devices">
             <p>No devices detected</p>
-            <button onClick={() => fetchDevices().then(setDevices)}>Refresh</button>
+            <button onClick={() => fetchDevices().then(setDevices)}>
+              Refresh
+            </button>
           </div>
         )}
       </section>
 
-      {/* Keep your existing styles */}
-      
+      {deviceToDelete && (
+        <div className="modal-overlay">
+          <div className="delete-confirm-modal">
+            <h2>Confirm Deletion</h2>
+            <p>Are you sure you want to delete device {devices.find(d => d.deviceId === deviceToDelete)?.name || deviceToDelete}?</p>
+            <div className="modal-buttons">
+              <button className="confirm-button" onClick={confirmDelete}>
+                Confirm
+              </button>
+              <button className="cancel-button" onClick={cancelDelete}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap');
 
@@ -443,17 +489,18 @@ export default function SmartHomeDashboard() {
         }
 
         .delete-button {
-          padding: 10px 20px;
+          padding: 16px 40px;
           background: linear-gradient(45deg, #ff3366, #ff6f91);
           border: none;
-          border-radius: 10px;
+          border-radius: 15px;
           color: #fff;
-          font-size: 14px;
+          font-size: 18px;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.4s ease;
           box-shadow: 0 4px 15px rgba(255, 51, 102, 0.5);
           position: relative;
+          z-index: 2;
           overflow: hidden;
         }
 
